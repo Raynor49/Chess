@@ -84,7 +84,7 @@ module SlidingPieces
     moves = []
 
     self.directions.each do |dx, dy|
-      moves.concat(grow_unblocked_moves_in_dir(dx, dy))
+      moves.concat(find_unblocked_moves(dx, dy))
     end
 
     moves
@@ -92,7 +92,7 @@ module SlidingPieces
 
   private
 
-  def grow_unblocked_moves_in_dir(dx, dy)
+  def find_unblocked_moves(dx, dy)
     x, y = self.pos
     moves = []
     loop do
