@@ -93,21 +93,18 @@ module SlidingPieces
   private
 
   def grow_unblocked_moves_in_dir(dx, dy)
-    cur_x, cur_y = self.pos
+    x, y = self.pos
     moves = []
     loop do
-      cur_x, cur_y = cur_x + dx, cur_y + dy
-      pos = [cur_x, cur_y]
+      x, y = x + dx, y + dy
+      pos = [x, y]
 
       break unless board.valid_pos?(pos)
 
       if board[pos].empty?
         moves << pos
       else
-        # can take an opponent's piece
         moves << pos if board[pos].color != color
-
-        # can't move past blocking piece
         break
       end
     end
