@@ -28,10 +28,9 @@ class Piece
       end
 
       self.board.move_piece!(first_pos, second_pos)
-
       valid = !self.board.in_check?(self.color.to_s)
-
       self.board.move_piece!(second_pos, first_pos)
+
       unless type.nil?
         self.board.add_piece(type, color, second_pos)
       end
@@ -47,9 +46,6 @@ class Piece
     @pos = val
   end
 
-  def symbol
-  end
-
   private
 end
 
@@ -62,54 +58,61 @@ class NullPiece < Piece
 end
 
 module SlidingPieces
+  HORIZONTAL_DIRS = [
+    [-1, 0],
+    [0, -1],
+    [0, 1],
+    [1, 0]
+  ].freeze
 
-  def move_style
-    moves = Hash.new
-    diag_xy = [[-1,-1],[-1,1],[1,-1],[1,1]]
-    moves[:diag] = collision(diag_xy)
-    # diag_xy.each do |dx,dy|
-    #   x,y = self.pos
-    #   (1..7).each do |num|
-    #     pot_pos = [self.pos.first + dx, self.pos.last + dy]
-    #     break unless self.board.valid_pos(pot_pos)
-    #     break if self.board[pot_pos].color == self.color
-    #     moves[:diag] << [x+dx*num,y+dy*num]
-    #     break if (self.board[pot_pos].color != self.color && self.board[pot_pos].color != nil)
-    #   end
-    # end
+  DIAGONAL_DIRS = [
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1]
+  ].freeze
 
-    straight_xy = [[1,0],[0,1],[-1,0],[0,-1]]
-    moves[:straight] = collision(straight_xy)
-    # straight_xy.each do |dx,dy|
-    #   x,y = self.pos
-    #   (1..7).each do |num|
-    #     pot_pos = [self.pos.first + dx, self.pos.last + dy]
-    #     break unless self.board.valid_pos(pot_pos)
-    #     break if self.board[pot_pos].color == self.color
-    #     moves[:straight] << [x+dx*num,y+dy*num]
-    #     break if (self.board[pot_pos].color != self.color && self.board[pot_pos].color != nil)
-    #   end
-    # end
+  def horizontal_directions
+    HORIZONTAL_DIRS
+  end
+
+  def diagonal_directions
+    DIAGONAL_DIRS
+  end
+
+  def moves
+    moves = []
+
+    self.directions.each do |dx, dy|
+      moves.concat(grow_unblocked_moves_in_dir(dx, dy))
+    end
+
     moves
   end
 
-  def collision(move_set)
-    result = []
+  private
 
-    move_set.each do |dx,dy|
-      x,y = self.pos
-      (1..7).each do |num|
-        pot_pos = [self.pos.first + dx, self.pos.last + dy]
-        break unless self.board.valid_pos(pot_pos)
-        break if self.board[pot_pos].color == self.color
-        result << [x+dx*num,y+dy*num]
-        break if (self.board[pot_pos].color != self.color && self.board[pot_pos].color != nil)
+  def grow_unblocked_moves_in_dir(dx, dy)
+    cur_x, cur_y = self.pos
+    moves = []
+    loop do
+      cur_x, cur_y = cur_x + dx, cur_y + dy
+      pos = [cur_x, cur_y]
+
+      break unless board.valid_pos?(pos)
+
+      if board[pos].empty?
+        moves << pos
+      else
+        # can take an opponent's piece
+        moves << pos if board[pos].color != color
+
+        # can't move past blocking piece
+        break
       end
     end
-    result
+    moves
   end
-
-
 end
 
 module SteppingPieces
@@ -143,8 +146,8 @@ end
 
 class Bishop < Piece
   include SlidingPieces
-  def moves
-    self.move_style[:diag]
+  def directions
+    self.diagonal_directions
   end
 
   def to_s
@@ -154,8 +157,8 @@ end
 
 class Rook < Piece
   include SlidingPieces
-  def moves
-    self.move_style[:straight]
+  def directions
+    self.horizontal_directions
   end
   def to_s
     "R"
@@ -164,8 +167,8 @@ end
 
 class Queen < Piece
   include SlidingPieces
-  def moves
-    self.move_style[:diag]+self.move_style[:straight]
+  def directions
+    self.diagonal_directions + self.horizontal_directions
   end
   def to_s
     "Q"
@@ -195,7 +198,6 @@ end
 class Pawns < Piece
   MOVE_DIFF = {black: [[1, 0],[2,0],[1,1],[1,-1]], white: [[-1,0],[-2,0],[-1,-1],[-1,1]]}
   def moves
-    #
     if self.starting?
       pawn_moveys = MOVE_DIFF[self.color].take(2).reject{|el| collision?(el)} + MOVE_DIFF[self.color].drop(2).select{|el| capture?(el)}
       x,y = self.pos

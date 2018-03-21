@@ -13,6 +13,7 @@ class Game
     }
 
     @turn = :white
+    @not = :black
   end
 
   def play
@@ -27,15 +28,17 @@ class Game
         retry
       end
     end
-    puts 'its all ogre now'
+    puts "#{@not} player has won!"
   end
 
   private
   def swap_turn
     if @turn == :white
       @turn = :black
+      @not = :white
     else
       @turn = :white
+      @not = :black
     end
   end
 end

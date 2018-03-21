@@ -92,7 +92,7 @@ class Board
   def find_king(color)
     king_pos = nil
     self.pieces.each do |piece|
-      if piece.class == King && piece.color.to_s == color
+      if piece.class == King && piece.color.to_s == color.to_s
         king_pos = piece.pos
       end
     end
@@ -108,21 +108,23 @@ class Board
     king_pos = self.find_king(color)
     pieces = self.pieces
     self.pieces.any? do |piece|
-      piece.moves.include?(king_pos) && piece.color.to_s != color
+      piece.moves.include?(king_pos) && piece.color.to_s != color.to_s
     end
   end
 
   def checkmate?(color)
-    # return false unless in_check?(color)
-    #
-    # pieces.all? do |piece|
-    #   piece.valid_moves(color).empty?
-    # end
-    my_pieces = self.pieces.select {|piece| piece.color.to_s == color.to_s}
-    no_moves = my_pieces.none? do |piece|
-      piece.moves.length > 0
+    return false unless in_check?(color)
+    no_checkmate = false
+    self.pieces.select {|piece| piece.color.to_s == color.to_s}.each do |piece|
+      piece.moves.each do |move|
+        no_checkmate = no_checkmate || piece.valid_move?(move, color)
+      end
     end
-    self.in_check?(color.to_s)
+    !no_checkmate
+  end
+
+  def valid_pos?(pos)
+    pos.all? { |coord| coord.between?(0, 7) }
   end
 
 end

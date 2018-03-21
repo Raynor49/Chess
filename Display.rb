@@ -13,7 +13,7 @@ class Display
 
   def render
     @notifications[:errors] = nil
-    # system('clear')
+    system('clear')
     @board.rows.each_with_index do |row, i|
 
       row.each_with_index do |piece, j|
